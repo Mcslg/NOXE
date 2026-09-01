@@ -19,3 +19,5 @@
 ## 已完成 (Done)
 - [x] 確認 MVP 支援 Google Gemini API 與直達答題流程 (BB)
 - [x] 完成架構規劃與實作計劃審批
+- [x] 原始碼推送到 GitHub (https://github.com/Mcslg/NOXE)
+- [x] 成功部署至 Vercel (https://qstonote.vercel.app)

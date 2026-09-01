@@ -42,21 +42,21 @@ export const Header: React.FC = () => {
 
           <button
             onClick={() => setIsKeyModalOpen(true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
               apiKey
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 animate-pulse'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-xs'
+                : 'bg-amber-500 text-white border-amber-600 hover:bg-amber-600 shadow-md shadow-amber-500/20 animate-bounce'
             }`}
           >
             {apiKey ? (
               <>
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>API Key 已就緒</span>
+                <span>API Key 已設定</span>
               </>
             ) : (
               <>
-                <Key className="w-3.5 h-3.5 text-amber-600" />
-                <span>點此設定 API Key</span>
+                <Key className="w-3.5 h-3.5 text-white" />
+                <span>設定 Gemini API Key</span>
               </>
             )}
           </button>
