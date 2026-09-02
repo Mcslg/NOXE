@@ -116,11 +116,12 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => 
                 ))
               ) : (
                 <>
-                  <option value="gemini-1.5-flash-latest">gemini-1.5-flash-latest (推薦)</option>
-                  <option value="gemini-2.0-flash">gemini-2.0-flash (最新快速)</option>
+                  <option value="gemini-2.5-flash">gemini-2.5-flash (最新推薦主力)</option>
+                  <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (輕量快速)</option>
+                  <option value="gemini-2.5-pro">gemini-2.5-pro (深度推理)</option>
+                  <option value="gemini-1.5-flash-latest">gemini-1.5-flash-latest</option>
                   <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                  <option value="gemini-1.5-pro">gemini-1.5-pro (深度推理)</option>
-                  <option value="gemini-pro">gemini-pro (經典)</option>
+                  <option value="gemini-1.5-pro">gemini-1.5-pro</option>
                 </>
               )}
             </select>

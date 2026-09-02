@@ -1,15 +1,16 @@
 import { StudyCard, StudySession } from '../types';
 
-// 備選模型清單，依序自動 fallback
+// 依據官方文檔最新規格定義主力與備用模型清單
 export const SUPPORTED_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-pro',
   'gemini-1.5-flash-latest',
-  'gemini-2.0-flash',
   'gemini-1.5-flash',
-  'gemini-1.5-pro',
-  'gemini-pro'
+  'gemini-1.5-pro'
 ];
 
-export const DEFAULT_MODEL = 'gemini-1.5-flash-latest';
+export const DEFAULT_MODEL = 'gemini-2.5-flash';
 
 export async function listAvailableModels(apiKey: string): Promise<string[]> {
   if (!apiKey) throw new Error('請先輸入 API Key');
