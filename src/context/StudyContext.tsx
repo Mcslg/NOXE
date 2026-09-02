@@ -18,6 +18,7 @@ interface StudyContextType {
   startSession: (topic: string) => Promise<void>;
   submitAnswer: (answer: string) => Promise<void>;
   requestExpertHelp: () => Promise<void>;
+  nextCardAfterExpert: () => Promise<void>;
   submitRetestAnswer: (cardId: string, answer: string) => Promise<void>;
   completeSession: () => Promise<void>;
   resetSession: () => void;
@@ -218,6 +219,42 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  // 專家模式閱讀完成後，直接切換到下一題（不觸發學生評估，0延遲）
+  const nextCardAfterExpert = async () => {
+    if (!session) return;
+
+    const updatedCards = [...session.cards];
+    let nextIndex = session.currentCardIndex;
+
+    if (session.currentCardIndex + 1 < session.cards.length) {
+      nextIndex = session.currentCardIndex + 1;
+      updatedCards[nextIndex].status = 'in_progress';
+      setSession({
+        ...session,
+        cards: updatedCards,
+        currentCardIndex: nextIndex
+      });
+    } else {
+      // 若已是最後一張卡片，檢查是否有待重測卡片
+      const hasRetest = updatedCards.some(c => c.status === 'needs_retest' && !c.isRetested);
+      if (hasRetest) {
+        setSession({
+          ...session,
+          cards: updatedCards,
+          phase: 'retest'
+        });
+      } else {
+        const finalState: StudySession = {
+          ...session,
+          cards: updatedCards,
+          phase: 'summary'
+        };
+        setSession(finalState);
+        await triggerNoteGeneration(finalState);
+      }
+    }
+  };
+
   // 提交重測回答
   const submitRetestAnswer = async (cardId: string, answer: string) => {
     if (!session) return;
@@ -293,6 +330,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         startSession,
         submitAnswer,
         requestExpertHelp,
+        nextCardAfterExpert,
         submitRetestAnswer,
         completeSession,
         resetSession

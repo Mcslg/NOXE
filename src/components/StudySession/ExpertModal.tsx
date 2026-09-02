@@ -3,7 +3,7 @@ import { Award, Lightbulb, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useStudy } from '../../context/StudyContext';
 
 export const ExpertModal: React.FC = () => {
-  const { session, submitAnswer } = useStudy();
+  const { session, nextCardAfterExpert } = useStudy();
   if (!session) return null;
 
   const currentCard = session.cards[session.currentCardIndex];
@@ -12,8 +12,7 @@ export const ExpertModal: React.FC = () => {
   const solution = currentCard.expertSolution;
 
   const handleUnderstood = () => {
-    // 點擊「我理解了，進入下一題（將在 Session 尾聲重測）」
-    submitAnswer(`[曾求助專家模式，已學習解析]`);
+    nextCardAfterExpert();
   };
 
   return (
