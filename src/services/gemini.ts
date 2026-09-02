@@ -11,6 +11,22 @@ export const SUPPORTED_MODELS = [
 
 export const DEFAULT_MODEL = 'gemini-1.5-flash-latest';
 
+export async function listAvailableModels(apiKey: string): Promise<string[]> {
+  if (!apiKey) throw new Error('請先輸入 API Key');
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
+  const response = await fetch(endpoint);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `查詢失敗 (HTTP ${response.status})`);
+  }
+  const data = await response.json();
+  const models: any[] = data.models || [];
+  // 過濾支援 generateContent 的模型
+  return models
+    .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+    .map(m => m.name.replace('models/', ''));
+}
+
 interface GeminiResponse {
   candidates?: Array<{
     content?: {
