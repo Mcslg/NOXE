@@ -10,6 +10,8 @@ import {
 interface StudyContextType {
   apiKey: string;
   setApiKey: (key: string) => void;
+  selectedModel: string;
+  setSelectedModel: (model: string) => void;
   session: StudySession | null;
   isLoading: boolean;
   loadingMessage: string;
@@ -26,11 +28,15 @@ interface StudyContextType {
 const StudyContext = createContext<StudyContextType | undefined>(undefined);
 
 const API_KEY_STORAGE_KEY = 'qstonote_gemini_api_key';
+const MODEL_STORAGE_KEY = 'qstonote_gemini_model';
 const SESSION_STORAGE_KEY = 'qstonote_current_session';
 
 export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [apiKey, setApiKeyState] = useState<string>(() => {
     return localStorage.getItem(API_KEY_STORAGE_KEY) || '';
+  });
+  const [selectedModel, setSelectedModelState] = useState<string>(() => {
+    return localStorage.getItem(MODEL_STORAGE_KEY) || 'gemini-1.5-flash-latest';
   });
   const [session, setSession] = useState<StudySession | null>(() => {
     const saved = localStorage.getItem(SESSION_STORAGE_KEY);
@@ -60,12 +66,17 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem(API_KEY_STORAGE_KEY, key);
   };
 
+  const setSelectedModel = (model: string) => {
+    setSelectedModelState(model);
+    localStorage.setItem(MODEL_STORAGE_KEY, model);
+  };
+
   const clearError = () => setError(null);
 
   // 開始新學習 Session
   const startSession = async (topic: string) => {
     if (!apiKey) {
-      setError('請先點擊右上角設定您的 Gemini API Key');
+      setError('請先設定您的 Gemini API Key');
       return;
     }
     setIsLoading(true);
@@ -73,7 +84,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setError(null);
 
     try {
-      const cards = await generateCards(topic, apiKey);
+      const cards = await generateCards(topic, apiKey, selectedModel);
       if (cards.length === 0) {
         throw new Error('無法針對該主題產生問題卡片，請嘗試更具體的主題名稱');
       }
@@ -123,7 +134,8 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         cardWithTempAnswers,
         answer,
         isFollowUpRound,
-        apiKey
+        apiKey,
+        selectedModel
       );
 
       const updatedCards = [...session.cards];
@@ -144,17 +156,14 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       let nextPhase = session.phase;
 
       if (isCardFinished) {
-        // 如果目前這張卡片已完成，推進到下一張或進入重測/總結
         if (session.currentCardIndex + 1 < session.cards.length) {
           nextIndex = session.currentCardIndex + 1;
           updatedCards[nextIndex].status = 'in_progress';
         } else {
-          // 檢查是否有待重測卡片
           const hasRetest = updatedCards.some(c => c.status === 'needs_retest' && !c.isRetested);
           if (hasRetest) {
             nextPhase = 'retest';
           } else {
-            // 直接產生筆記
             setSession({
               ...session,
               cards: updatedCards,
@@ -199,14 +208,15 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const expertResult = await getExpertExplanation(
         session.topic,
         currentCard.question,
-        apiKey
+        apiKey,
+        selectedModel
       );
 
       const updatedCards = [...session.cards];
       updatedCards[session.currentCardIndex] = {
         ...currentCard,
         expertSolution: expertResult,
-        status: 'needs_retest' // 標記為需重測
+        status: 'needs_retest'
       };
 
       setSession({
@@ -259,7 +269,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsLoading(true);
     setLoadingMessage('正在根據整場教學互動，統整結構化精華筆記...');
     try {
-      const note = await synthesizeFinalNote(currentSession, apiKey);
+      const note = await synthesizeFinalNote(currentSession, apiKey, selectedModel);
       setSession({
         ...currentSession,
         finalNote: note,
@@ -288,6 +298,8 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       value={{
         apiKey,
         setApiKey,
+        selectedModel,
+        setSelectedModel,
         session,
         isLoading,
         loadingMessage,

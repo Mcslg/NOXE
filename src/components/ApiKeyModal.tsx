@@ -8,8 +8,9 @@ interface ApiKeyModalProps {
 }
 
 export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => {
-  const { apiKey, setApiKey } = useStudy();
+  const { apiKey, setApiKey, selectedModel, setSelectedModel } = useStudy();
   const [inputKey, setInputKey] = useState(apiKey);
+  const [model, setModel] = useState(selectedModel || 'gemini-1.5-flash-latest');
   const [isSaved, setIsSaved] = useState(false);
 
   if (!isOpen) return null;
@@ -17,6 +18,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setApiKey(inputKey.trim());
+    setSelectedModel(model);
     setIsSaved(true);
     setTimeout(() => {
       setIsSaved(false);
@@ -57,6 +59,24 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => 
               className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm outline-none transition-all"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              選擇 Gemini 模型
+            </label>
+            <select
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white transition-all"
+            >
+              <option value="gemini-1.5-flash-latest">gemini-1.5-flash-latest (推薦)</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash (最新快速)</option>
+              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+              <option value="gemini-1.5-pro">gemini-1.5-pro (深度推理)</option>
+              <option value="gemini-pro">gemini-pro (經典)</option>
+            </select>
+            <p className="text-[11px] text-slate-400 mt-1">系統已內建自動容錯機制，若指定模型無法存取將自動切換備用模型。</p>
           </div>
 
           <div className="bg-slate-50 p-3.5 rounded-xl text-xs text-slate-600 space-y-1.5 border border-slate-100">
