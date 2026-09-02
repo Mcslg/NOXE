@@ -21,3 +21,4 @@
 - [x] 完成架構規劃與實作計劃審批
 - [x] 原始碼推送到 GitHub (https://github.com/Mcslg/NOXE)
 - [x] 成功部署至 Vercel (https://qstonote.vercel.app)
+- [x] 修正並鎖定為驗證可用的 Gemini 2.5 Flash 系列模型，移除冗餘手動選單

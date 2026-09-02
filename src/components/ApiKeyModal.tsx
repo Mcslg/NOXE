@@ -61,7 +61,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => 
 
           <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>底層已自動啟用 <strong>Gemini 2.5 Flash</strong> 官方穩定模型。</span>
+            <span>底層已自動啟用 <strong>Gemini 3.6 Flash</strong> 官方最新推薦模型。</span>
           </div>
 
           <div className="bg-slate-50 p-3.5 rounded-xl text-xs text-slate-600 space-y-1.5 border border-slate-100">

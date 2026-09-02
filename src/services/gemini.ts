@@ -1,15 +1,15 @@
 import { StudyCard, StudySession } from '../types';
 
-// 經由 ListModels 驗證的可用模型清單，預設使用最穩定優質的 gemini-2.5-flash
+// 官方最新推薦模型（依錯誤提示升級至 3.x 系列）
 export const SUPPORTED_MODELS = [
-  'gemini-2.5-flash',
+  'gemini-3.6-flash',
   'gemini-3.7-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-2.5-pro',
-  'gemini-3.5-flash'
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite'
 ];
 
-export const DEFAULT_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_MODEL = 'gemini-3.6-flash';
 
 interface GeminiResponse {
   candidates?: Array<{
