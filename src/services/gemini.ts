@@ -1,32 +1,15 @@
 import { StudyCard, StudySession } from '../types';
 
-// 依據官方文檔最新規格定義主力與備用模型清單
+// 經由 ListModels 驗證的可用模型清單，預設使用最穩定優質的 gemini-2.5-flash
 export const SUPPORTED_MODELS = [
   'gemini-2.5-flash',
+  'gemini-3.7-flash',
   'gemini-2.5-flash-lite',
   'gemini-2.5-pro',
-  'gemini-1.5-flash-latest',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro'
+  'gemini-3.5-flash'
 ];
 
 export const DEFAULT_MODEL = 'gemini-2.5-flash';
-
-export async function listAvailableModels(apiKey: string): Promise<string[]> {
-  if (!apiKey) throw new Error('請先輸入 API Key');
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
-  const response = await fetch(endpoint);
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `查詢失敗 (HTTP ${response.status})`);
-  }
-  const data = await response.json();
-  const models: any[] = data.models || [];
-  // 過濾支援 generateContent 的模型
-  return models
-    .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
-    .map(m => m.name.replace('models/', ''));
-}
 
 interface GeminiResponse {
   candidates?: Array<{
@@ -92,34 +75,30 @@ async function callSingleModel(
 export async function callGemini(
   apiKey: string,
   prompt: string,
-  isJson: boolean = false,
-  preferredModel: string = DEFAULT_MODEL
+  isJson: boolean = false
 ): Promise<string> {
   if (!apiKey) {
     throw new Error('請先在設定中輸入 Gemini API Key');
   }
 
-  // 嘗試優先模型以及所有候選備用模型
-  const modelsToTry = Array.from(new Set([preferredModel, ...SUPPORTED_MODELS]));
   let lastError: Error | null = null;
 
-  for (const model of modelsToTry) {
+  for (const model of SUPPORTED_MODELS) {
     try {
       return await callSingleModel(apiKey, prompt, model, isJson);
     } catch (err: any) {
-      console.warn(`調用模型 ${model} 失敗，嘗試下一個備用模型:`, err.message);
+      console.warn(`調用模型 ${model} 失敗，嘗試備用模型:`, err.message);
       lastError = err;
     }
   }
 
-  throw new Error(`Gemini API 呼叫失敗: ${lastError?.message || '所有備用模型均無法存取'}`);
+  throw new Error(`Gemini API 呼叫失敗: ${lastError?.message || '模型存取失敗'}`);
 }
 
 // 1. 輸入觀念，拆解為 3-4 張初學者提問卡片
 export async function generateCards(
   topic: string,
-  apiKey: string,
-  model?: string
+  apiKey: string
 ): Promise<StudyCard[]> {
   const prompt = `你是一個教學設計專家與初學者。使用者想要複習/學習的主題是：「${topic}」。
 請將這個主題拆解為 3 到 4 個核心觀念問題。
@@ -134,7 +113,7 @@ export async function generateCards(
   }
 ]`;
 
-  const rawJson = await callGemini(apiKey, prompt, true, model);
+  const rawJson = await callGemini(apiKey, prompt, true);
   try {
     const cleaned = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
@@ -157,8 +136,7 @@ export async function evaluateAnswerAndFollowUp(
   card: StudyCard,
   currentAnswer: string,
   isFollowUpRound: boolean,
-  apiKey: string,
-  model?: string
+  apiKey: string
 ): Promise<{ understood: string; missingOrConfused: string; followUpQuestion?: string; isComplete: boolean }> {
   const historyText = card.userAnswers.map((ans, idx) => `[導師前次回應 ${idx + 1}]: ${ans}`).join('\n');
 
@@ -187,7 +165,7 @@ ${historyText ? `先前的問答紀錄：\n${historyText}\n` : ''}
   "isComplete": true/false
 }`;
 
-  const rawJson = await callGemini(apiKey, prompt, true, model);
+  const rawJson = await callGemini(apiKey, prompt, true);
   const cleaned = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -196,22 +174,20 @@ ${historyText ? `先前的問答紀錄：\n${historyText}\n` : ''}
 export async function expandKeywordsToDraft(
   keywords: string,
   question: string,
-  apiKey: string,
-  model?: string
+  apiKey: string
 ): Promise<string> {
   const prompt = `你是一個教學輔助助手。使用者是一位導師，正要回答初學者學生的問題：「${question}」。
 使用者只提供了幾個關鍵字/碎片想法：「${keywords}」。
 請幫導師將這些關鍵字擴展成一段口語化、親切、深入淺出的教學回答草稿（繁體中文），讓導師可以快速修改或確認後直接送出。請直接輸出回答內容，不要包含多餘的問候或備註。`;
 
-  return await callGemini(apiKey, prompt, false, model);
+  return await callGemini(apiKey, prompt, false);
 }
 
 // 4. 專家模式解答（反向求教）
 export async function getExpertExplanation(
   topic: string,
   question: string,
-  apiKey: string,
-  model?: string
+  apiKey: string
 ): Promise<{ summary: string; keyPoints: string[]; analogy: string }> {
   const prompt = `你是一位頂尖的資深領域專家與卓越教育家。
 使用者在學習「${topic}」時，遇到了以下問題感到困惑，向你求助：
@@ -229,7 +205,7 @@ export async function getExpertExplanation(
   "analogy": "..."
 }`;
 
-  const rawJson = await callGemini(apiKey, prompt, true, model);
+  const rawJson = await callGemini(apiKey, prompt, true);
   const cleaned = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -237,8 +213,7 @@ export async function getExpertExplanation(
 // 5. 彙整完整學習筆記
 export async function synthesizeFinalNote(
   session: StudySession,
-  apiKey: string,
-  model?: string
+  apiKey: string
 ): Promise<string> {
   const cardDetails = session.cards.map((c, i) => {
     return `### 卡片 ${i + 1}: ${c.question}
@@ -264,5 +239,5 @@ ${cardDetails}
 
 請直接輸出 Markdown 文字。`;
 
-  return await callGemini(apiKey, prompt, false, model);
+  return await callGemini(apiKey, prompt, false);
 }

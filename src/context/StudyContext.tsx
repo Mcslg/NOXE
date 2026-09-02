@@ -10,8 +10,6 @@ import {
 interface StudyContextType {
   apiKey: string;
   setApiKey: (key: string) => void;
-  selectedModel: string;
-  setSelectedModel: (model: string) => void;
   session: StudySession | null;
   isLoading: boolean;
   loadingMessage: string;
@@ -28,15 +26,11 @@ interface StudyContextType {
 const StudyContext = createContext<StudyContextType | undefined>(undefined);
 
 const API_KEY_STORAGE_KEY = 'qstonote_gemini_api_key';
-const MODEL_STORAGE_KEY = 'qstonote_gemini_model';
 const SESSION_STORAGE_KEY = 'qstonote_current_session';
 
 export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [apiKey, setApiKeyState] = useState<string>(() => {
     return localStorage.getItem(API_KEY_STORAGE_KEY) || '';
-  });
-  const [selectedModel, setSelectedModelState] = useState<string>(() => {
-    return localStorage.getItem(MODEL_STORAGE_KEY) || 'gemini-1.5-flash-latest';
   });
   const [session, setSession] = useState<StudySession | null>(() => {
     const saved = localStorage.getItem(SESSION_STORAGE_KEY);
@@ -66,11 +60,6 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem(API_KEY_STORAGE_KEY, key);
   };
 
-  const setSelectedModel = (model: string) => {
-    setSelectedModelState(model);
-    localStorage.setItem(MODEL_STORAGE_KEY, model);
-  };
-
   const clearError = () => setError(null);
 
   // 開始新學習 Session
@@ -84,7 +73,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setError(null);
 
     try {
-      const cards = await generateCards(topic, apiKey, selectedModel);
+      const cards = await generateCards(topic, apiKey);
       if (cards.length === 0) {
         throw new Error('無法針對該主題產生問題卡片，請嘗試更具體的主題名稱');
       }
@@ -134,8 +123,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         cardWithTempAnswers,
         answer,
         isFollowUpRound,
-        apiKey,
-        selectedModel
+        apiKey
       );
 
       const updatedCards = [...session.cards];
@@ -208,8 +196,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const expertResult = await getExpertExplanation(
         session.topic,
         currentCard.question,
-        apiKey,
-        selectedModel
+        apiKey
       );
 
       const updatedCards = [...session.cards];
@@ -269,7 +256,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsLoading(true);
     setLoadingMessage('正在根據整場教學互動，統整結構化精華筆記...');
     try {
-      const note = await synthesizeFinalNote(currentSession, apiKey, selectedModel);
+      const note = await synthesizeFinalNote(currentSession, apiKey);
       setSession({
         ...currentSession,
         finalNote: note,
@@ -298,8 +285,6 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       value={{
         apiKey,
         setApiKey,
-        selectedModel,
-        setSelectedModel,
         session,
         isLoading,
         loadingMessage,
